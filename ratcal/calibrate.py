@@ -1,5 +1,8 @@
 import numpy as np
+from warnings import warn
+from cvxopt import matrix
 from cvxopt import spmatrix
+from cvxopt import solvers
 
 
 def calibrate(M: np.array):
@@ -29,4 +32,21 @@ def calibrate(M: np.array):
                 H[n + i, rat] = -M[i, j]
                 H[n + m + i, rat] = 1
 
-    return H
+    H = H[:-1, :]  # removes the last row for normalization
+    Q = 2 * H * H.trans()
+    q = matrix(np.zeros(n + 2 * m - 1))
+
+    h1 = matrix(0., (1, n))
+    h2 = matrix(1., (1, m))
+    h3 = matrix(0., (1, m - 1))
+    A = matrix([[h1], [h2], [h3]])
+
+    b = matrix(m, tc='d')
+
+    sol = solvers.qp(Q, q, A=A, b=b)
+    if sol['status'] != 'optimal':
+        warn('calibrate() failed to find an optimal solution')
+    z = np.array(sol['x'][0:n]).flatten()
+    p = np.array(sol['x'][n:n + m]).flatten()
+    q = np.append(np.array(sol['x'][n + m:]).flatten(), 0.)
+    return z, p, q
