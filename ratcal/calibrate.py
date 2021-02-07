@@ -18,7 +18,7 @@ def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
     """
     Calibrate ratings and evaluate raters.
 
-    :param M: The matrix of ratings.
+    :param M: The matrix of ratings. -1 denotes null. Ratings should be equal or greater than zero.
     :param noise: The range of random, tiny noise added to ratings to
            avoid linear dependence (when certain matrix ranks are low).
     :param scale: The range that the ratings are scaled to.
@@ -65,6 +65,12 @@ def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
 
 
 def average(M: np.array):
+    """
+    Calculate average ratings.
+
+    :param M: The matrix of ratings. -1 denotes null. Ratings should be equal or greater than zero.
+    :return: The average ratings.
+    """
     _check_rating_matrix(M)
 
     # m is the number of raters
@@ -82,3 +88,43 @@ def average(M: np.array):
         ratings.append(total / count)
 
     return ratings
+
+
+def find_min(M: np.array):
+    """
+    Find the min rating.
+
+    :param M: The matrix of ratings. -1 denotes null. Ratings should be equal or greater than zero.
+    :return: The min rating value. None if no ratings.
+    """
+    _check_rating_matrix(M)
+
+    m, n = M.shape
+    rat = None
+    for i in range(m):
+        for j in range(n):
+            if M[i, j] < 0:
+                continue
+            if rat is None or M[i, j] < rat:
+                rat = M[i, j]
+    return rat
+
+
+def find_max(M: np.array):
+    """
+    Find the max rating.
+
+    :param M: The matrix of ratings. -1 denotes null. Ratings should be equal or greater than zero.
+    :return: The max rating value. None if no ratings.
+    """
+    _check_rating_matrix(M)
+
+    m, n = M.shape
+    rat = None
+    for i in range(m):
+        for j in range(n):
+            if M[i, j] < 0:
+                continue
+            if rat is None or M[i, j] > rat:
+                rat = M[i, j]
+    return rat
