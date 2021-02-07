@@ -1,3 +1,4 @@
+import random
 import numpy as np
 from warnings import warn
 from cvxopt import matrix
@@ -5,11 +6,13 @@ from cvxopt import spmatrix
 from cvxopt import solvers
 
 
-def calibrate(M: np.array, scale=(0, 0)):
+def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
     """
     Calibrate ratings and evaluate raters.
 
     :param M: The matrix of ratings.
+    :param noise: The range of random, tiny noise added to ratings to
+           avoid linear dependence (when certain matrix ranks are low).
     :param scale: The range that the ratings are scaled to.
     :return:
     """
@@ -28,10 +31,10 @@ def calibrate(M: np.array, scale=(0, 0)):
                 raise ValueError("M[%d, %d] = %f should be -1 denoting null" % (i, j, M[i, j]))
 
             if M[i, j] >= 0:
-                rat = j * m + i
-                H[j, rat] = 1
-                H[n + i, rat] = -M[i, j]
-                H[n + m + i, rat] = 1
+                r = j * m + i
+                H[j, r] = 1
+                H[n + i, r] = -M[i, j] + random.uniform(noise[0], noise[1])
+                H[n + m + i, r] = 1
 
     H = H[:-1, :]  # removes the last row for normalization
     Q = 2 * H * H.trans()
