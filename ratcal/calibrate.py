@@ -5,11 +5,12 @@ from cvxopt import spmatrix
 from cvxopt import solvers
 
 
-def calibrate(M: np.array):
+def calibrate(M: np.array, scale=(0, 0)):
     """
     Calibrate ratings and evaluate raters.
 
     :param M: The matrix of ratings.
+    :param scale: The range that the ratings are scaled to.
     :return:
     """
 
@@ -49,4 +50,7 @@ def calibrate(M: np.array):
     z = np.array(sol['x'][0:n]).flatten()
     p = np.array(sol['x'][n:n + m]).flatten()
     q = np.append(np.array(sol['x'][n + m:]).flatten(), 0.)
+
+    if scale != (0, 0):
+        z = np.interp(z, (z.min(), z.max()), scale)
     return z, p, q
