@@ -56,8 +56,10 @@ def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
     if sol['status'] != 'optimal':
         warn('calibrate() failed to find an optimal solution')
     ratings = np.array(sol['x'][0:n]).flatten()
-    bias = np.array(sol['x'][n:n + m]).flatten()
-    leniency = np.append(np.array(sol['x'][n + m:]).flatten(), 0.)
+    p = np.array(sol['x'][n:n + m]).flatten()
+    q = np.append(np.array(sol['x'][n + m:]).flatten(), 0.)
+    bias = 1 / p
+    leniency = q * bias
 
     if scale != (0, 0):
         ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
