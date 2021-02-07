@@ -6,6 +6,14 @@ from cvxopt import spmatrix
 from cvxopt import solvers
 
 
+def check_rating_matrix(M: np.array):
+    if M.ndim != 2:
+        raise ValueError("M must be two-dimension, got %d dimension(s)" % M.ndim)
+    for i, v in np.ndenumerate(M):
+        if v < 0 and v != -1:
+            raise ValueError("M[%d, %d] = %f should be -1 denoting null" % (i[0], i[1], v))
+
+
 def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
     """
     Calibrate ratings and evaluate raters.
@@ -17,8 +25,8 @@ def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
     :return:
     """
 
-    if M.ndim != 2:
-        raise ValueError("M must be two-dimension, got %d dimension(s)" % M.ndim)
+    check_rating_matrix(M)
+
     # m is the number of raters
     # n is the number of objects being rated
     m, n = M.shape
@@ -27,9 +35,6 @@ def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
 
     for i in range(m):
         for j in range(n):
-            if M[i, j] < 0 and M[i, j] != -1:
-                raise ValueError("M[%d, %d] = %f should be -1 denoting null" % (i, j, M[i, j]))
-
             if M[i, j] >= 0:
                 r = j * m + i
                 H[j, r] = 1
