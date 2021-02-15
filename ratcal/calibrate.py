@@ -1,31 +1,26 @@
 import random
-import numpy as np
 from warnings import warn
+
 from cvxopt import matrix
 from cvxopt import spmatrix
 from cvxopt import solvers
+import numpy as np
 
-
-def _check_rating_matrix(M: np.array):
-    if M.ndim != 2:
-        raise ValueError("M must be two-dimension, got %d dimension(s)" % M.ndim)
-    for i, v in np.ndenumerate(M):
-        if v < 0 and v != -1:
-            raise ValueError("M[%d, %d] = %f should be -1 denoting null" % (i[0], i[1], v))
+from ratcal.utility import check_rating_matrix
 
 
 def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
     """
     Calibrate ratings and evaluate raters.
 
-    :param M: The matrix of ratings. -1 denotes null. Ratings should be equal or greater than zero.
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :param noise: The range of random, tiny noise added to ratings to
            avoid linear dependence (when certain matrix ranks are low).
     :param scale: The range that the ratings are scaled to.
     :return: The calibrated ratings, the bias, and the leniency of each rater
     """
 
-    _check_rating_matrix(M)
+    check_rating_matrix(M)
 
     # m is the number of raters
     # n is the number of objects being rated
@@ -70,10 +65,10 @@ def average(M: np.array):
     """
     Calculate average ratings.
 
-    :param M: The matrix of ratings. -1 denotes null. Ratings should be equal or greater than zero.
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :return: The average ratings.
     """
-    _check_rating_matrix(M)
+    check_rating_matrix(M)
 
     # m is the number of raters
     # n is the number of objects being rated
@@ -96,10 +91,10 @@ def find_min(M: np.array):
     """
     Find the min rating.
 
-    :param M: The matrix of ratings. -1 denotes null. Ratings should be equal or greater than zero.
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :return: The min rating value. None if no ratings.
     """
-    _check_rating_matrix(M)
+    check_rating_matrix(M)
 
     m, n = M.shape
     rat = None
@@ -116,10 +111,10 @@ def find_max(M: np.array):
     """
     Find the max rating.
 
-    :param M: The matrix of ratings. -1 denotes null. Ratings should be equal or greater than zero.
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :return: The max rating value. None if no ratings.
     """
-    _check_rating_matrix(M)
+    check_rating_matrix(M)
 
     m, n = M.shape
     rat = None

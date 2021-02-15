@@ -4,19 +4,25 @@ import pytest
 from ratcal import calibrate
 from ratcal import average
 from ratcal import find_min, find_max
+from ratcal import check_rating_matrix
 
 
 def test_input_dimensions():
 
     with pytest.raises(ValueError) as error:
         m = np.array([0, -1, 1])
-        calibrate(m)
+        check_rating_matrix(m)
     assert 'got 1 dimension(s)' in str(error.value)
 
     with pytest.raises(ValueError) as error:
         m = np.zeros((1, 2, 3))
-        calibrate(m)
+        check_rating_matrix(m)
     assert 'got 3 dimension(s)' in str(error.value)
+
+    with pytest.raises(ValueError) as error:
+        m = np.array([0, -1, 1])
+        calibrate(m)
+    assert 'got 1 dimension(s)' in str(error.value)
 
     with pytest.raises(ValueError) as error:
         m = np.array([0, -1, 1])
@@ -24,29 +30,14 @@ def test_input_dimensions():
     assert 'got 1 dimension(s)' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.zeros((1, 2, 3))
-        average(m)
-    assert 'got 3 dimension(s)' in str(error.value)
-
-    with pytest.raises(ValueError) as error:
         m = np.array([0, -1, 1])
         find_min(m)
     assert 'got 1 dimension(s)' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.zeros((1, 2, 3))
-        find_min(m)
-    assert 'got 3 dimension(s)' in str(error.value)
-
-    with pytest.raises(ValueError) as error:
         m = np.array([0, -1, 1])
         find_max(m)
     assert 'got 1 dimension(s)' in str(error.value)
-
-    with pytest.raises(ValueError) as error:
-        m = np.zeros((1, 2, 3))
-        find_max(m)
-    assert 'got 3 dimension(s)' in str(error.value)
 
 
 def test_input_ratings():
