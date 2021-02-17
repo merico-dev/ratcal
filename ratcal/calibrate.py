@@ -9,17 +9,7 @@ import numpy as np
 from ratcal.utility import check_rating_matrix
 
 
-def calibrate(M: np.array, scale=(0, 0)):
-    """
-    Calibrate ratings and evaluate raters.
-
-    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
-    :param scale: The range that the ratings are scaled to.
-    :return: The calibrated ratings, the bias, and the leniency of each rater
-    """
-
-    check_rating_matrix(M)
-
+def _prepare(M: np.array):
     # m is the number of raters
     # n is the number of objects being rated
     m, n = M.shape
@@ -36,7 +26,6 @@ def calibrate(M: np.array, scale=(0, 0)):
 
     H = H[:-1, :]  # removes the last row for normalization
     Q = 2 * H * H.trans()
-    q = matrix(np.zeros(n + 2 * m - 1))
 
     h1 = matrix(0., (1, n))
     h2 = matrix(1., (1, m))
@@ -44,13 +33,38 @@ def calibrate(M: np.array, scale=(0, 0)):
     A = matrix([[h1], [h2], [h3]])
 
     b = matrix(m, tc='d')
+    return Q, A, b
 
-    sol = solvers.qp(Q, q, A=A, b=b)
+
+def _qp(P, A, b):
+    q = matrix(np.zeros(P.size[1]))
+    sol = solvers.qp(P, q, A=A, b=b)
     if sol['status'] != 'optimal':
         warn('calibrate() failed to find an optimal solution')
-    ratings = np.array(sol['x'][0:n]).flatten()
-    p = np.array(sol['x'][n:n + m]).flatten()
-    q = np.append(np.array(sol['x'][n + m:]).flatten(), 0.)
+    return sol['x']
+
+
+def calibrate(M: np.array, scale=(0, 0)):
+    """
+    Calibrate ratings and evaluate raters.
+
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
+    :param scale: The range that the ratings are scaled to.
+    :return: The calibrated ratings, the bias, and the leniency of each rater
+    """
+
+    check_rating_matrix(M)
+
+    # m is the number of raters
+    # n is the number of objects being rated
+    m, n = M.shape
+
+    P, A, b = _prepare(M)
+    x = _qp(P, A, b)
+
+    ratings = np.array(x[0:n]).flatten()
+    p = np.array(x[n:n + m]).flatten()
+    q = np.append(np.array(x[n + m:]).flatten(), 0.)
     bias = 1 / p
     leniency = q * bias
 
