@@ -9,13 +9,11 @@ import numpy as np
 from ratcal.utility import check_rating_matrix
 
 
-def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
+def calibrate(M: np.array, scale=(0, 0)):
     """
     Calibrate ratings and evaluate raters.
 
     :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
-    :param noise: The range of random, tiny noise added to ratings to
-           avoid linear dependence (when certain matrix ranks are low).
     :param scale: The range that the ratings are scaled to.
     :return: The calibrated ratings, the bias, and the leniency of each rater
     """
@@ -33,7 +31,7 @@ def calibrate(M: np.array, noise=(0, 0), scale=(0, 0)):
             if M[i, j] >= 0:
                 r = j * m + i
                 H[j, r] = 1
-                H[n + i, r] = -M[i, j] + random.uniform(noise[0], noise[1])
+                H[n + i, r] = -M[i, j]
                 H[n + m + i, r] = 1
 
     H = H[:-1, :]  # removes the last row for normalization
