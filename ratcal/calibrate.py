@@ -82,8 +82,11 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), coordinates: bool =
         min_rat = find_min(M)
         best_column = np.full((m, 1), max_rat)
         worst_column = np.full((m, 1), min_rat)
-        ratings, bias, leniency = calibrate(np.column_stack((M, best_column, worst_column)), scale, False)
-        return ratings[:-2], bias, leniency
+        ratings, bias, leniency = calibrate(np.column_stack((M, best_column, worst_column)), coordinates=False)
+        ratings = ratings[:-2]
+        if scale != (0., 0.):
+            ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
+        return ratings, bias, leniency
 
     x = _qp(P, A, b)
 

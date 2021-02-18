@@ -85,4 +85,8 @@ def test_paper_review_example():
 
 def test_performance_review():
     M = np.loadtxt('tests/rat_mat.data')
-    calibrate(M)
+    assert M.shape[0] == M.shape[1]
+    n = M.shape[0]
+    ratings, bias, leniency = calibrate(M, (0, 100))
+    assert len(ratings) == n and len(bias) == n and len(leniency) == n
+    assert ratings.min() == 0 and ratings.max() == 100
