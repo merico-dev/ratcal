@@ -68,16 +68,21 @@ def test_input_ratings():
 
 
 def test_paper_review_example():
-    m = np.array([[.40, .44, -1., .67, -1., .81, .89, .95, .99],
+    M = np.array([[.40, .44, -1., .67, -1., .81, .89, .95, .99],
                   [.15, .19, .32, .45, .49, .62, -1., -1., -1.],
                   [-1., .21, -1., .39, -1., .61, -1., .79, -1.],
                   [.20, -1., .20, -1., .60, -1., .70, -1., .80],
                   [-1., -1., .10, -1., .20, -1., .30, .40, .50]])
-    ratings, bias, leniency = calibrate(m, (0.0, 1.0))
+    ratings, bias, leniency = calibrate(M, (0.0, 1.0))
     assert np.array_equal(np.round(ratings, decimals=2), [0.0, .05, .18, .40, .53, .68, .75, .92, 1.0])
 
-    avg_rat = average(m)
+    avg_rat = average(M)
     assert np.array_equal(np.round(avg_rat, decimals=2), [.25, .28, .21, .50, .43, .68, .63, .71, .76])
 
-    assert find_min(m) == .10
-    assert find_max(m) == .99
+    assert find_min(M) == .10
+    assert find_max(M) == .99
+
+
+def test_performance_review():
+    M = np.loadtxt('tests/rat_mat.data')
+    calibrate(M)

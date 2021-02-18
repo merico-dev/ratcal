@@ -1,15 +1,15 @@
-import random
 from warnings import warn
 
 from cvxopt import matrix
 from cvxopt import spmatrix
 from cvxopt import solvers
 import numpy as np
+import numpy.linalg as npl
 
 from ratcal.utility import check_rating_matrix
 
 
-def _prepare(M: np.array):
+def _prepare(M: np.array) -> (spmatrix, matrix, matrix):
     # m is the number of raters
     # n is the number of objects being rated
     m, n = M.shape
@@ -36,6 +36,20 @@ def _prepare(M: np.array):
     return Q, A, b
 
 
+def _check_ranks(P: spmatrix, A: matrix):
+    rank_A = npl.matrix_rank(A)
+    p = A.size[0]
+    if rank_A < p:
+        warn("cvxopt qp: rank(A) = %d lower than p = %d" % (rank_A, p))
+        return False
+    rank_PA = npl.matrix_rank(matrix([P, A]))
+    n = P.size[1]
+    if rank_PA < n:
+        warn("cvxopt qp: rank([P, A]) = %d lower than n = %d" % (rank_PA, n))
+        return False
+    return True
+
+
 def _qp(P, A, b):
     q = matrix(np.zeros(P.size[1]))
     sol = solvers.qp(P, q, A=A, b=b)
@@ -44,12 +58,14 @@ def _qp(P, A, b):
     return sol['x']
 
 
-def calibrate(M: np.array, scale=(0, 0)):
+def calibrate(M: np.array, scale: (float, float) = (0., 0.), coordinates: bool = None):
     """
     Calibrate ratings and evaluate raters.
 
     :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :param scale: The range that the ratings are scaled to.
+    :param coordinates: Whether to add two hypothetical, common objects, one that all raters give highest ratings and
+           one that all raters give lowest ratings, in order to coordinate raters. None refers to automatic selection.
     :return: The calibrated ratings, the bias, and the leniency of each rater
     """
 
@@ -60,6 +76,15 @@ def calibrate(M: np.array, scale=(0, 0)):
     m, n = M.shape
 
     P, A, b = _prepare(M)
+
+    if coordinates is True or (coordinates is None and not _check_ranks(P, A)):
+        max_rat = find_max(M)
+        min_rat = find_min(M)
+        best_column = np.full((m, 1), max_rat)
+        worst_column = np.full((m, 1), min_rat)
+        ratings, bias, leniency = calibrate(np.column_stack((M, best_column, worst_column)), scale, False)
+        return ratings[:-2], bias, leniency
+
     x = _qp(P, A, b)
 
     ratings = np.array(x[0:n]).flatten()
@@ -68,7 +93,7 @@ def calibrate(M: np.array, scale=(0, 0)):
     bias = 1 / p
     leniency = q * bias
 
-    if scale != (0, 0):
+    if scale != (0., 0.):
         ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
     return ratings, bias, leniency
 
