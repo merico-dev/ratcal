@@ -16,3 +16,24 @@ def check_rating_matrix(M: np.array):
         raise ValueError("M must be two-dimension, got %d dimension(s)" % M.ndim)
     for index in np.ndindex(M.shape):
         is_rated(M, index)
+
+
+def sort_rat(name_list: list, ratings: list, reverse: bool = True):
+    """
+    Sort ratings associated with names. The sort is stable.
+
+    :param name_list: The list of names to be associated with the ratings respectively
+    :param ratings: The list of ratings to sort
+    :param reverse: Descending by default. False means ascending.
+    :return: The sorted list of names and their ratings
+    """
+    if len(name_list) != len(ratings):
+        raise ValueError("# of names %d does not equal to # of ratings %d" % (len(name_list), len(ratings)))
+    result = list()
+    for i, name in enumerate(name_list):
+        result.append((name, ratings[i]))
+
+    def compare(name_rat):
+        return name_rat[1]
+    result.sort(key=compare, reverse=reverse)
+    return result
