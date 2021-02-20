@@ -73,7 +73,7 @@ def test_paper_review_example():
                   [-1., .21, -1., .39, -1., .61, -1., .79, -1.],
                   [.20, -1., .20, -1., .60, -1., .70, -1., .80],
                   [-1., -1., .10, -1., .20, -1., .30, .40, .50]])
-    ratings, bias, leniency = calibrate(M, (0.0, 1.0))
+    ratings, bias, leniency = calibrate(M, (0.0, 1.0), False)
     assert np.array_equal(np.round(ratings, decimals=2), [0.0, .05, .18, .40, .53, .68, .75, .92, 1.0])
 
     avg_rat = average(M)

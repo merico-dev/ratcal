@@ -33,6 +33,7 @@ def _prepare(M: np.array) -> (spmatrix, matrix, matrix):
     A = matrix([[h1], [h2], [h3]])
 
     b = matrix(m, tc='d')
+
     return Q, A, b
 
 
@@ -40,14 +41,11 @@ def _check_ranks(P: spmatrix, A: matrix):
     rank_A = npl.matrix_rank(A)
     p = A.size[0]
     if rank_A < p:
-        warn("cvxopt qp: rank(A) = %d lower than p = %d" % (rank_A, p))
-        return False
+        warn("cvxopt qp: rank(A) = %d lower than p = %d. Consider setting additive." % (rank_A, p))
     rank_PA = npl.matrix_rank(matrix([P, A]))
     n = P.size[1]
     if rank_PA < n:
-        warn("cvxopt qp: rank([P, A]) = %d lower than n = %d" % (rank_PA, n))
-        return False
-    return True
+        warn("cvxopt qp: rank([P, A]) = %d lower than n = %d. Consider setting additive." % (rank_PA, n))
 
 
 def _qp(P, A, b):
@@ -58,14 +56,14 @@ def _qp(P, A, b):
     return sol['x']
 
 
-def calibrate(M: np.array, scale: (float, float) = (0., 0.), coordinates: bool = None):
+def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = True):
     """
     Calibrate ratings and evaluate raters.
 
     :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :param scale: The range that the ratings are scaled to.
-    :param coordinates: Whether to add two hypothetical, common objects, one that all raters give highest ratings and
-           one that all raters give lowest ratings, in order to coordinate raters. None refers to automatic selection.
+    :param additive: Whether to add a hypothetical rater and two hypothetical objects, one that all raters give
+           highest ratings and one that all raters give lowest ratings, in order to coordinate raters.
     :return: The calibrated ratings, the bias, and the leniency of each rater
     """
 
@@ -77,17 +75,18 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), coordinates: bool =
 
     P, A, b = _prepare(M)
 
-    if coordinates is True or (coordinates is None and not _check_ranks(P, A)):
+    if additive:
         max_rat = find_max(M)
         min_rat = find_min(M)
         best_column = np.full((m, 1), max_rat)
         worst_column = np.full((m, 1), min_rat)
-        ratings, bias, leniency = calibrate(np.column_stack((M, best_column, worst_column)), coordinates=False)
+        ratings, bias, leniency = calibrate(np.column_stack((M, best_column, worst_column)), additive=False)
         ratings = ratings[:-2]
         if scale != (0., 0.):
             ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
         return ratings, bias, leniency
 
+    _check_ranks(P, A)
     x = _qp(P, A, b)
 
     ratings = np.array(x[0:n]).flatten()
