@@ -88,6 +88,10 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
         r[0, -1] = min_rat
         M = np.vstack((M, r))
 
+        assert M.shape[0] == m + 1
+        assert M.shape[1] == n + 2
+        assert average(M, [n, n + 1]) == [max_rat, min_rat]
+
         ratings, bias, leniency = calibrate(M, additive=False)
 
         ratings = ratings[:-2]
@@ -112,11 +116,12 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     return ratings, bias, leniency
 
 
-def average(M: np.array):
+def average(M: np.array, indexes: list = None):
     """
     Calculate average ratings.
 
     :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
+    :param indexes: A list of columns to calculate their average ratings
     :return: The average ratings.
     """
     check_rating_matrix(M)
@@ -125,8 +130,11 @@ def average(M: np.array):
     # n is the number of objects being rated
     m, n = M.shape
 
+    if indexes is None:
+        indexes = range(n)
+
     ratings = []
-    for j in range(n):
+    for j in indexes:
         total = 0.0
         count = 0
         for i in range(m):
