@@ -78,10 +78,22 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     if additive:
         max_rat = find_max(M)
         min_rat = find_min(M)
+
         best_column = np.full((m, 1), max_rat)
         worst_column = np.full((m, 1), min_rat)
-        ratings, bias, leniency = calibrate(np.column_stack((M, best_column, worst_column)), additive=False)
+        M = np.hstack((M, best_column, worst_column))
+
+        r = np.full((1, n + 2), -1.)
+        r[0, -2] = max_rat
+        r[0, -1] = min_rat
+        M = np.vstack((M, r))
+
+        ratings, bias, leniency = calibrate(M, additive=False)
+
         ratings = ratings[:-2]
+        bias = bias[:-1]
+        leniency = leniency[:-1]
+
         if scale != (0., 0.):
             ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
         return ratings, bias, leniency
