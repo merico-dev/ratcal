@@ -111,7 +111,7 @@ def test_paper_review_example():
                   [-1., .21, -1., .39, -1., .61, -1., .79, -1.],
                   [.20, -1., .20, -1., .60, -1., .70, -1., .80],
                   [-1., -1., .10, -1., .20, -1., .30, .40, .50]])
-    ratings, bias, leniency = calibrate(M, (0.0, 1.0), False)
+    ratings, distinct, lenient = calibrate(M, (0.0, 1.0), False)
     assert np.array_equal(np.round(ratings, decimals=2), [0.0, .05, .18, .40, .53, .68, .75, .92, 1.0])
 
     avg_rat = average(M)
@@ -126,6 +126,6 @@ def test_performance_review():
     assert M.shape[0] == M.shape[1]
     n = M.shape[0]
 
-    ratings, bias, leniency = calibrate(M, (0, 100))
-    assert len(ratings) == n and len(bias) == n and len(leniency) == n
+    ratings, distinct, lenient = calibrate(M, (0, 100))
+    assert len(ratings) == n and len(distinct) == n and len(lenient) == n
     assert ratings.min() == 0 and ratings.max() == 100

@@ -65,7 +65,7 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     :param additive: Whether to add two hypothetical objects, one that all raters give highest ratings and
            one that all raters give lowest ratings, and a hypothetical rater who only rate the two,
            in order to coordinate raters.
-    :return: The calibrated ratings, the bias, and the leniency of each rater
+    :return: The calibrated ratings, the distinction, and the leniency of each rater
     """
 
     check_rating_matrix(M)
@@ -92,15 +92,15 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
         assert M.shape[1] == n + 2
         assert _average(M, [n, n + 1]) == [max_rat, min_rat]
 
-        ratings, bias, leniency = calibrate(M, additive=False)
+        ratings, distinct, lenient = calibrate(M, additive=False)
 
         ratings = ratings[:-2]
-        bias = bias[:-1]
-        leniency = leniency[:-1]
+        distinct = distinct[:-1]
+        lenient = lenient[:-1]
 
         if scale != (0., 0.):
             ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
-        return ratings, bias, leniency
+        return ratings, distinct, lenient
 
     _check_ranks(P, A)
     x = _qp(P, A, b)
@@ -108,12 +108,12 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     ratings = np.array(x[0:n]).flatten()
     p = np.array(x[n:n + m]).flatten()
     q = np.append(np.array(x[n + m:]).flatten(), 0.)
-    bias = 1 / p
-    leniency = q * bias
+    distinct = 1 / p
+    lenient = q
 
     if scale != (0., 0.):
         ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
-    return ratings, bias, leniency
+    return ratings, distinct, lenient
 
 
 def _average(M: np.array, indexes: list = None):
