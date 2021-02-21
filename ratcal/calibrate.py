@@ -62,8 +62,9 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
 
     :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :param scale: The range that the ratings are scaled to.
-    :param additive: Whether to add a hypothetical rater and two hypothetical objects, one that all raters give
-           highest ratings and one that all raters give lowest ratings, in order to coordinate raters.
+    :param additive: Whether to add two hypothetical objects, one that all raters give highest ratings and
+           one that all raters give lowest ratings, and a hypothetical rater who only rate the two,
+           in order to coordinate raters.
     :return: The calibrated ratings, the bias, and the leniency of each rater
     """
 
@@ -78,7 +79,6 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     if additive:
         max_rat = find_max(M)
         min_rat = find_min(M)
-
         best_column = np.full((m, 1), max_rat)
         worst_column = np.full((m, 1), min_rat)
         M = np.hstack((M, best_column, worst_column))
@@ -90,7 +90,7 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
 
         assert M.shape[0] == m + 1
         assert M.shape[1] == n + 2
-        assert average(M, [n, n + 1]) == [max_rat, min_rat]
+        assert _average(M, [n, n + 1]) == [max_rat, min_rat]
 
         ratings, bias, leniency = calibrate(M, additive=False)
 
@@ -116,16 +116,7 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     return ratings, bias, leniency
 
 
-def average(M: np.array, indexes: list = None):
-    """
-    Calculate average ratings.
-
-    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
-    :param indexes: A list of columns to calculate their average ratings
-    :return: The average ratings.
-    """
-    check_rating_matrix(M)
-
+def _average(M: np.array, indexes: list = None):
     # m is the number of raters
     # n is the number of objects being rated
     m, n = M.shape
@@ -133,7 +124,7 @@ def average(M: np.array, indexes: list = None):
     if indexes is None:
         indexes = range(n)
 
-    ratings = []
+    rat = []
     for j in indexes:
         total = 0.0
         count = 0
@@ -141,9 +132,87 @@ def average(M: np.array, indexes: list = None):
             if M[i, j] >= 0:
                 total += M[i, j]
                 count += 1
-        ratings.append(total / count)
+        rat.append(total / count if count else -1.)
 
-    return ratings
+    return rat
+
+
+def average(M: np.array, indexes: list = None):
+    """
+    Calculate average ratings of objects.
+
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
+    :param indexes: A list of columns to calculate their average ratings
+    :return: The average ratings.
+    """
+    check_rating_matrix(M)
+
+    return _average(M, indexes)
+
+
+def _rater_average(M: np.array, indexes: list = None):
+    # m is the number of raters
+    # n is the number of objects being rated
+    m, n = M.shape
+
+    if indexes is None:
+        indexes = range(m)
+
+    rat = []
+    for i in indexes:
+        total = 0.0
+        count = 0
+        for j in range(n):
+            if M[i, j] >= 0:
+                total += M[i, j]
+                count += 1
+        rat.append(total / count if count else -1.)
+    return rat
+
+
+def rater_average(M: np.array, indexes: list = None):
+    """
+    Calculate the average ratings of raters.
+
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
+    :param indexes: A list of rows to calculate their average ratings
+    :return: The average ratings.
+    """
+    check_rating_matrix(M)
+
+    return _rater_average(M, indexes)
+
+
+def _rater_median(M: np.array, indexes: list = None):
+    # m is the number of raters
+    # n is the number of objects being rated
+    m, n = M.shape
+
+    if indexes is None:
+        indexes = range(m)
+
+    median_rat = []
+    for i in indexes:
+        rat = []
+        for j in range(n):
+            if M[i, j] >= 0:
+                rat.append(M[i, j])
+        median = np.median(rat) if rat else -1.
+        median_rat.append(median)
+    return median_rat
+
+
+def rater_median(M: np.array, indexes: list = None):
+    """
+    Select the median ratings of raters.
+
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
+    :param indexes: A list of rows to select their median ratings
+    :return: The median ratings.
+    """
+    check_rating_matrix(M)
+
+    return _rater_median(M, indexes)
 
 
 def find_min(M: np.array):

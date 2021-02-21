@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from ratcal import calibrate
-from ratcal import average
+from ratcal import average, rater_average, rater_median
 from ratcal import find_min, find_max
 from ratcal import check_rating_matrix
 
@@ -10,61 +10,99 @@ from ratcal import check_rating_matrix
 def test_input_dimensions():
 
     with pytest.raises(ValueError) as error:
-        m = np.array([0, -1, 1])
-        check_rating_matrix(m)
+        M = np.array([0, -1, 1])
+        check_rating_matrix(M)
     assert 'got 1 dimension(s)' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.zeros((1, 2, 3))
-        check_rating_matrix(m)
+        M = np.zeros((1, 2, 3))
+        check_rating_matrix(M)
     assert 'got 3 dimension(s)' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.array([0, -1, 1])
-        calibrate(m)
+        M = np.array([0, -1, 1])
+        calibrate(M)
     assert 'got 1 dimension(s)' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.array([0, -1, 1])
-        average(m)
+        M = np.array([0, -1, 1])
+        average(M)
     assert 'got 1 dimension(s)' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.array([0, -1, 1])
-        find_min(m)
+        M = np.array([0, -1, 1])
+        find_min(M)
     assert 'got 1 dimension(s)' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.array([0, -1, 1])
-        find_max(m)
+        M = np.array([0, -1, 1])
+        find_max(M)
     assert 'got 1 dimension(s)' in str(error.value)
 
 
 def test_input_ratings():
 
     with pytest.raises(ValueError) as error:
-        m = np.array([[2, 1, 0.5],
+        M = np.array([[2, 1, 0.5],
                       [5, -2, 1]])
-        calibrate(m)
+        calibrate(M)
     assert 'should be -1 denoting null' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.array([[2, 1, 0.5],
+        M = np.array([[2, 1, 0.5],
                       [5, -2, 1]])
-        average(m)
+        average(M)
     assert 'should be -1 denoting null' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.array([[2, 1, 0.5],
+        M = np.array([[2, 1, 0.5],
                       [5, -2, 1]])
-        find_min(m)
+        find_min(M)
     assert 'should be -1 denoting null' in str(error.value)
 
     with pytest.raises(ValueError) as error:
-        m = np.array([[2, 1, 0.5],
+        M = np.array([[2, 1, 0.5],
                       [5, -2, 1]])
-        find_max(m)
+        find_max(M)
     assert 'should be -1 denoting null' in str(error.value)
+
+
+def test_average():
+    assert average(np.array([[]])) == []
+
+    M = np.array([[-1., -1., 2., 3.],
+                  [-1., 1.1, 2., 5.],
+                  [-1., -1., 2., 4.]])
+    avg_rat = average(M)
+    assert avg_rat == [-1., 1.1, 2., 4.]
+    assert average(M, [0]) == [-1.]
+    assert average(M, [-1]) == [4.]
+
+
+def test_rater_average():
+    assert rater_average(np.array([[]])) == [-1.]
+
+    M = np.array([[1., 2., 6.]])
+    assert rater_average(M, [0]) == [3.]
+
+    M = np.array([[1., 4., 3., 2.],
+                  [-1., -1., 1., -1.],
+                  [-1., -1., -1., -1.],
+                  [700, 100, 100, -1.]])
+    assert rater_average(M) == [2.5, 1., -1., 300]
+
+
+def test_rater_median():
+    assert rater_median(np.array([[]])) == [-1.]
+
+    M = np.array([[1., 2., 6.]])
+    assert rater_median(M, [0]) == [2.]
+
+    M = np.array([[1., 4., 3., 2.],
+                  [-1., -1., 1., -1.],
+                  [-1., -1., -1., -1.],
+                  [300, 100, 100, -1.]])
+    assert rater_median(M) == [2.5, 1., -1., 100]
 
 
 def test_paper_review_example():
@@ -87,6 +125,7 @@ def test_performance_review():
     M = np.loadtxt('tests/rat_mat.data')
     assert M.shape[0] == M.shape[1]
     n = M.shape[0]
+
     ratings, bias, leniency = calibrate(M, (0, 100))
     assert len(ratings) == n and len(bias) == n and len(leniency) == n
     assert ratings.min() == 0 and ratings.max() == 100
