@@ -48,21 +48,43 @@ def _check_ranks(P: spmatrix, A: matrix):
         warn("cvxopt qp: rank([P, A]) = %d lower than n = %d. Consider setting additive." % (rank_PA, n))
 
 
-def _qp(P, A, b):
+def _qp(P: spmatrix, A: matrix, b: matrix) -> np.array:
+    _check_ranks(P, A)
+
     q = matrix(np.zeros(P.size[1]))
     sol = solvers.qp(P, q, A=A, b=b)
     if sol['status'] != 'optimal':
         warn('calibrate() failed to find an optimal solution')
-    return sol['x']
+    return np.array(sol['x'])
 
 
-def _scale(ratings, lenient, scale):
-    ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
-    lenient = np.interp(lenient, (ratings.min(), ratings.max()), scale)  # the same mapping with ratings
+def _calibrate(M: np.array) -> (np.array, np.array, np.array):
+    P, A, b = _prepare(M)
+    x = _qp(P, A, b)
+
+    m, n = M.shape
+    ratings = x[0:n].flatten()
+    p = x[n:n + m].flatten()
+    q = np.append(x[n + m:].flatten(), 0.)
+    distinct = 1 / p
+    lenient = q
+    return ratings, distinct, lenient
+
+
+def _scale(ratings: np.array, lenient: np.array, scale: np.array) -> (np.array, np.array):
+    rat_min = ratings.min()
+    rat_max = ratings.max()
+    slope = (scale[1] - scale[0]) / (rat_max - rat_min)
+
+    rat_check = np.interp(ratings, (rat_min, rat_max), scale)
+    ratings = np.array([(r - rat_min) * slope + scale[0] for r in ratings])
+    assert np.array_equal(rat_check, ratings)
+
+    lenient = np.array([d * slope for d in lenient])
     return ratings, lenient
 
 
-def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = True):
+def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = True) -> (np.array, np.array, np.array):
     """
     Calibrate ratings and evaluate raters.
 
@@ -80,11 +102,9 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     # n is the number of objects being rated
     m, n = M.shape
 
-    P, A, b = _prepare(M)
-
     if additive:
-        max_rat = find_max(M)
-        min_rat = find_min(M)
+        max_rat = _find_max(M)
+        min_rat = _find_min(M)
         best_column = np.full((m, 1), max_rat)
         worst_column = np.full((m, 1), min_rat)
         M = np.hstack((M, best_column, worst_column))
@@ -98,24 +118,13 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
         assert M.shape[1] == n + 2
         assert _average(M, [n, n + 1]) == [max_rat, min_rat]
 
-        ratings, distinct, lenient = calibrate(M, additive=False)
+        ratings, distinct, lenient = _calibrate(M)
 
         ratings = ratings[:-2]
         distinct = distinct[:-1]
         lenient = lenient[:-1]
-
-        if scale != (0., 0.):
-            ratings, lenient = _scale(ratings, lenient, scale)
-        return ratings, distinct, lenient
-
-    _check_ranks(P, A)
-    x = _qp(P, A, b)
-
-    ratings = np.array(x[0:n]).flatten()
-    p = np.array(x[n:n + m]).flatten()
-    q = np.append(np.array(x[n + m:]).flatten(), 0.)
-    distinct = 1 / p
-    lenient = q
+    else:
+        ratings, distinct, lenient = _calibrate(M)
 
     if scale != (0., 0.):
         ratings, lenient = _scale(ratings, lenient, scale)
@@ -221,6 +230,18 @@ def rater_median(M: np.array, indexes: list = None):
     return _rater_median(M, indexes)
 
 
+def _find_min(M: np.array):
+    m, n = M.shape
+    rat = None
+    for i in range(m):
+        for j in range(n):
+            if M[i, j] < 0:
+                continue
+            if rat is None or M[i, j] < rat:
+                rat = M[i, j]
+    return rat
+
+
 def find_min(M: np.array):
     """
     Find the min rating.
@@ -229,14 +250,17 @@ def find_min(M: np.array):
     :return: The min rating value. None if no ratings.
     """
     check_rating_matrix(M)
+    return _find_min(M)
 
+
+def _find_max(M: np.array):
     m, n = M.shape
     rat = None
     for i in range(m):
         for j in range(n):
             if M[i, j] < 0:
                 continue
-            if rat is None or M[i, j] < rat:
+            if rat is None or M[i, j] > rat:
                 rat = M[i, j]
     return rat
 
@@ -249,13 +273,4 @@ def find_max(M: np.array):
     :return: The max rating value. None if no ratings.
     """
     check_rating_matrix(M)
-
-    m, n = M.shape
-    rat = None
-    for i in range(m):
-        for j in range(n):
-            if M[i, j] < 0:
-                continue
-            if rat is None or M[i, j] > rat:
-                rat = M[i, j]
-    return rat
+    return _find_max(M)
