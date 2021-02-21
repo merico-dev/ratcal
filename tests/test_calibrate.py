@@ -68,41 +68,40 @@ def test_input_ratings():
 
 
 def test_average():
-    assert average(np.array([[]])) == []
+    assert np.array_equal(average(np.array([[]])), [])
 
     M = np.array([[-1., -1., 2., 3.],
                   [-1., 1.1, 2., 5.],
                   [-1., -1., 2., 4.]])
-    avg_rat = average(M)
-    assert avg_rat == [-1., 1.1, 2., 4.]
-    assert average(M, [0]) == [-1.]
-    assert average(M, [-1]) == [4.]
+    assert np.array_equal(average(M), [-1., 1.1, 2., 4.])
+    assert np.array_equal(average(M, [0]), [-1.])
+    assert np.array_equal(average(M, [-1]), [4.])
 
 
 def test_rater_average():
-    assert rater_average(np.array([[]])) == [-1.]
+    assert np.array_equal(rater_average(np.array([[]])), [-1.])
 
     M = np.array([[1., 2., 6.]])
-    assert rater_average(M, [0]) == [3.]
+    assert np.array_equal(rater_average(M, [0]), [3.])
 
     M = np.array([[1., 4., 3., 2.],
                   [-1., -1., 1., -1.],
                   [-1., -1., -1., -1.],
                   [700, 100, 100, -1.]])
-    assert rater_average(M) == [2.5, 1., -1., 300]
+    assert np.array_equal(rater_average(M), [2.5, 1., -1., 300])
 
 
 def test_rater_median():
     assert rater_median(np.array([[]])) == [-1.]
 
     M = np.array([[1., 2., 6.]])
-    assert rater_median(M, [0]) == [2.]
+    assert np.array_equal(rater_median(M, [0]), [2.])
 
     M = np.array([[1., 4., 3., 2.],
                   [-1., -1., 1., -1.],
                   [-1., -1., -1., -1.],
                   [300, 100, 100, -1.]])
-    assert rater_median(M) == [2.5, 1., -1., 100]
+    assert np.array_equal(rater_median(M), [2.5, 1., -1., 100])
 
 
 def test_paper_review_example():
@@ -121,11 +120,22 @@ def test_paper_review_example():
     assert find_max(M) == .99
 
 
-def test_performance_review():
-    M = np.loadtxt('tests/rat_mat.data')
+def test_performance_review_0():
+    M = np.loadtxt('tests/rat_mat_0.data')
     assert M.shape[0] == M.shape[1]
     n = M.shape[0]
 
     ratings, distinct, lenient = calibrate(M, (0, 100))
     assert len(ratings) == n and len(distinct) == n and len(lenient) == n
-    assert ratings.min() == 0 and ratings.max() == 100
+    assert np.isclose(ratings.min(), 0) and np.isclose(ratings.max(), 100)
+
+
+def test_performance_review_1():
+    M = np.loadtxt('tests/rat_mat_1.data')
+    assert M.shape[0] == M.shape[1]
+    n = M.shape[0]
+
+    avg_rat = average(M)
+    ratings, distinct, lenient = calibrate(M, (avg_rat.min(), avg_rat.max()))
+    assert len(ratings) == n and len(distinct) == n and len(lenient) == n
+    assert np.isclose(ratings.min(), avg_rat.min()) and np.isclose(ratings.max(), avg_rat.max())

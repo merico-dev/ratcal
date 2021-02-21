@@ -78,7 +78,7 @@ def _scale(ratings: np.array, lenient: np.array, scale: np.array) -> (np.array, 
 
     rat_check = np.interp(ratings, (rat_min, rat_max), scale)
     ratings = np.array([(r - rat_min) * slope + scale[0] for r in ratings])
-    assert np.array_equal(rat_check, ratings)
+    assert np.allclose(rat_check, ratings)
 
     lenient = np.array([d * slope for d in lenient])
     return ratings, lenient
@@ -131,7 +131,7 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     return ratings, distinct, lenient
 
 
-def _average(M: np.array, indexes: list = None):
+def _average(M: np.array, indexes: list = None) -> list:
     # m is the number of raters
     # n is the number of objects being rated
     m, n = M.shape
@@ -152,7 +152,7 @@ def _average(M: np.array, indexes: list = None):
     return rat
 
 
-def average(M: np.array, indexes: list = None):
+def average(M: np.array, indexes: list = None) -> np.array:
     """
     Calculate average ratings of objects.
 
@@ -162,10 +162,10 @@ def average(M: np.array, indexes: list = None):
     """
     check_rating_matrix(M)
 
-    return _average(M, indexes)
+    return np.array(_average(M, indexes))
 
 
-def _rater_average(M: np.array, indexes: list = None):
+def _rater_average(M: np.array, indexes: list = None) -> list:
     # m is the number of raters
     # n is the number of objects being rated
     m, n = M.shape
@@ -185,7 +185,7 @@ def _rater_average(M: np.array, indexes: list = None):
     return rat
 
 
-def rater_average(M: np.array, indexes: list = None):
+def rater_average(M: np.array, indexes: list = None) -> np.array:
     """
     Calculate the average ratings of raters.
 
@@ -195,10 +195,10 @@ def rater_average(M: np.array, indexes: list = None):
     """
     check_rating_matrix(M)
 
-    return _rater_average(M, indexes)
+    return np.array(_rater_average(M, indexes))
 
 
-def _rater_median(M: np.array, indexes: list = None):
+def _rater_median(M: np.array, indexes: list = None) -> list:
     # m is the number of raters
     # n is the number of objects being rated
     m, n = M.shape
@@ -217,7 +217,7 @@ def _rater_median(M: np.array, indexes: list = None):
     return median_rat
 
 
-def rater_median(M: np.array, indexes: list = None):
+def rater_median(M: np.array, indexes: list = None) -> np.array:
     """
     Select the median ratings of raters.
 
@@ -227,7 +227,7 @@ def rater_median(M: np.array, indexes: list = None):
     """
     check_rating_matrix(M)
 
-    return _rater_median(M, indexes)
+    return np.array(_rater_median(M, indexes))
 
 
 def _find_min(M: np.array):
