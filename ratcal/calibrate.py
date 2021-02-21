@@ -56,6 +56,12 @@ def _qp(P, A, b):
     return sol['x']
 
 
+def _scale(ratings, lenient, scale):
+    ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
+    lenient = np.interp(lenient, (ratings.min(), ratings.max()), scale)  # the same mapping with ratings
+    return ratings, lenient
+
+
 def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = True):
     """
     Calibrate ratings and evaluate raters.
@@ -99,7 +105,7 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
         lenient = lenient[:-1]
 
         if scale != (0., 0.):
-            ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
+            ratings, lenient = _scale(ratings, lenient, scale)
         return ratings, distinct, lenient
 
     _check_ranks(P, A)
@@ -112,7 +118,7 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     lenient = q
 
     if scale != (0., 0.):
-        ratings = np.interp(ratings, (ratings.min(), ratings.max()), scale)
+        ratings, lenient = _scale(ratings, lenient, scale)
     return ratings, distinct, lenient
 
 
