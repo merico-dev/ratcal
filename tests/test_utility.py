@@ -8,16 +8,16 @@ def test_sort_rat():
     assert len(result) == 0
 
     name_list = ['a']
-    ratings = [0]
+    ratings = [0.]
     result = sort_rat(name_list, ratings)
-    assert result == [('a', 0)]
+    assert result == [('a', 0., 1)]
 
     name_list = ['a', 'b', 'c']
-    ratings = [1, 3, 2]
+    ratings = [1., 3., 2.]
     result = sort_rat(name_list, ratings)
-    assert result == [('b', 3), ('c', 2), ('a', 1)]
+    assert result == [('b', 3., 1), ('c', 2., 2), ('a', 1., 3)]
 
     name_list = ['d', 'a', 'b', 'c']
-    ratings = [1, 3, 3, 2]
+    ratings = [1., 3., 3., 2.]
     result = sort_rat(name_list, ratings, False)
-    assert result == [('d', 1), ('c', 2), ('a', 3), ('b', 3)]
+    assert result == [('d', 1., 1), ('c', 2., 2), ('a', 3., 3), ('b', 3., 4)]

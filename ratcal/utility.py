@@ -25,7 +25,7 @@ def sort_rat(name_list: list, ratings: list, reverse: bool = True):
     :param name_list: The list of names to be associated with the ratings respectively
     :param ratings: The list of ratings to sort
     :param reverse: Descending by default. False means ascending.
-    :return: The sorted list of names and their ratings
+    :return: The sorted list of names and their ratings and rankings
     """
     if len(name_list) != len(ratings):
         raise ValueError("# of names %d does not equal to # of ratings %d" % (len(name_list), len(ratings)))
@@ -36,4 +36,4 @@ def sort_rat(name_list: list, ratings: list, reverse: bool = True):
     def compare(name_rat):
         return name_rat[1]
     result.sort(key=compare, reverse=reverse)
-    return result
+    return [(r[0], r[1], i + 1) for i, r in enumerate(result)]
