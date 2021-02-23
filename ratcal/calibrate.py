@@ -90,9 +90,9 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
 
     :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :param scale: The range that the ratings are scaled to.
-    :param additive: Whether to add two hypothetical objects, one that all raters give highest ratings and
-           one that all raters give lowest ratings, and a hypothetical rater who only rate the two,
-           in order to coordinate raters.
+    :param additive: Whether to add three hypothetical objects, one that all raters give highest ratings,
+           one that all raters give lowest ratings, and one that all raters give their average ratings, and
+           a hypothetical rater who only rate the three, in order to coordinate raters.
     :return: The calibrated ratings, the distinction, and the leniency of each rater
     """
 
@@ -107,20 +107,22 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
         min_rat = _find_min(M)
         best_column = np.full((m, 1), max_rat)
         worst_column = np.full((m, 1), min_rat)
-        M = np.hstack((M, best_column, worst_column))
+        average_column = _rater_average(M)
+        M = np.column_stack((M, best_column, worst_column, average_column))
 
-        r = np.full((1, n + 2), -1.)
-        r[0, -2] = max_rat
-        r[0, -1] = min_rat
+        r = np.full((1, n + 3), -1.)
+        r[0, -3] = max_rat
+        r[0, -2] = min_rat
+        r[0, -1] = _average(M, [-1])[0]
         M = np.vstack((M, r))
 
         assert M.shape[0] == m + 1
-        assert M.shape[1] == n + 2
+        assert M.shape[1] == n + 3
         assert _average(M, [n, n + 1]) == [max_rat, min_rat]
 
         ratings, distinct, lenient = _calibrate(M)
 
-        ratings = ratings[:-2]
+        ratings = ratings[:-3]
         distinct = distinct[:-1]
         lenient = lenient[:-1]
     else:
