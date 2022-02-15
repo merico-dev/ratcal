@@ -18,11 +18,12 @@ def _prepare(M: np.array) -> (spmatrix, matrix, matrix):
 
     for i in range(m):
         for j in range(n):
-            if M[i, j] >= 0:
-                r = j * m + i
-                H[j, r] = 1
-                H[n + i, r] = -M[i, j]
-                H[n + m + i, r] = 1
+            if M[i, j] == -1.:
+                continue
+            r = j * m + i
+            H[j, r] = 1
+            H[n + i, r] = -M[i, j]
+            H[n + m + i, r] = 1
 
     H = H[:-1, :]  # removes the last row for normalization
     Q = 2 * H * H.trans()
@@ -90,9 +91,8 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
 
     :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :param scale: The range that the ratings are scaled to.
-    :param additive: Whether to add three hypothetical objects, one that all raters give highest ratings,
-           one that all raters give lowest ratings, and one that all raters give their average ratings, and
-           a hypothetical rater who only rate the three, in order to coordinate raters.
+    :param additive: Whether to add three hypothetical objects, one that all raters give their highest ratings,
+           one that all raters give their lowest ratings, and one that all raters give their median ratings.
     :return: The calibrated ratings, the distinction, and the leniency of each rater
     """
 
@@ -146,9 +146,10 @@ def _average(M: np.array, indexes: list = None) -> list:
         total = 0.0
         count = 0
         for i in range(m):
-            if M[i, j] >= 0:
-                total += M[i, j]
-                count += 1
+            if M[i, j] == -1.:
+                continue
+            total += M[i, j]
+            count += 1
         rat.append(total / count if count else -1.)
 
     return rat
@@ -180,9 +181,10 @@ def _rater_average(M: np.array, indexes: list = None) -> list:
         total = 0.0
         count = 0
         for j in range(n):
-            if M[i, j] >= 0:
-                total += M[i, j]
-                count += 1
+            if M[i, j] == -1.:
+                continue
+            total += M[i, j]
+            count += 1
         rat.append(total / count if count else -1.)
     return rat
 
@@ -212,8 +214,9 @@ def _rater_median(M: np.array, indexes: list = None) -> list:
     for i in indexes:
         rat = []
         for j in range(n):
-            if M[i, j] >= 0:
-                rat.append(M[i, j])
+            if M[i, j] == -1.:
+                continue
+            rat.append(M[i, j])
         median = np.median(rat) if rat else -1.
         median_rat.append(median)
     return median_rat
