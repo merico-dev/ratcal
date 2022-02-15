@@ -113,12 +113,12 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
         r = np.full((1, n + 3), -1.)
         r[0, -3] = max_rat
         r[0, -2] = min_rat
-        r[0, -1] = _average(M, [-1])[0]
+        r[0, -1] = _object_average(M, [-1])[0]
         M = np.vstack((M, r))
 
         assert M.shape[0] == m + 1
         assert M.shape[1] == n + 3
-        assert _average(M, [n, n + 1]) == [max_rat, min_rat]
+        assert _object_average(M, [n, n + 1]) == [max_rat, min_rat]
 
         ratings, distinct, lenient = _calibrate(M)
 
@@ -133,7 +133,7 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
     return ratings, distinct, lenient
 
 
-def _average(M: np.array, indexes: list = None) -> list:
+def _object_average(M: np.array, indexes: list = None) -> list:
     # m is the number of raters
     # n is the number of objects being rated
     m, n = M.shape
@@ -165,7 +165,7 @@ def average(M: np.array, indexes: list = None) -> np.array:
     """
     check_rating_matrix(M)
 
-    return np.array(_average(M, indexes))
+    return np.array(_object_average(M, indexes))
 
 
 def _rater_average(M: np.array, indexes: list = None) -> list:
