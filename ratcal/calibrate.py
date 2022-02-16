@@ -91,8 +91,8 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
 
     :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
     :param scale: The range that the ratings are scaled to.
-    :param additive: Whether to add three hypothetical objects, one that all raters give their highest ratings,
-           one that all raters give their lowest ratings, and one that all raters give their median ratings.
+    :param additive: Whether to add three hypothetical objects, one that all raters give the highest rating,
+           one that all raters give the lowest rating, and one that all raters give their average ratings.
     :return: The calibrated ratings, the distinction, and the leniency of each rater
     """
 
