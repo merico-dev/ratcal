@@ -235,12 +235,45 @@ def rater_median(M: np.array, indexes: list = None) -> np.array:
     return np.array(_rater_median(M, indexes))
 
 
+def _rater_min(M: np.array, indexes: list = None) -> list:
+    # m is the number of raters
+    # n is the number of objects being rated
+    m, n = M.shape
+
+    if indexes is None:
+        indexes = range(m)
+
+    rat = []
+    for i in indexes:
+        min_rat = None
+        for j in range(n):
+            if M[i, j] == -1.:
+                continue
+            if min_rat is None or M[i, j] < min_rat:
+                min_rat = M[i, j]
+        rat.append(-1. if min_rat is None else min_rat)
+    return rat
+
+
+def rater_min(M: np.array, indexes: list = None) -> np.array:
+    """
+    Calculate the min ratings of raters.
+
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
+    :param indexes: A list of rows to calculate their average ratings
+    :return: The min ratings.
+    """
+    check_rating_matrix(M)
+
+    return np.array(_rater_min(M, indexes))
+
+
 def _find_min(M: np.array):
     m, n = M.shape
     rat = None
     for i in range(m):
         for j in range(n):
-            if M[i, j] < 0:
+            if M[i, j] == -1.:
                 continue
             if rat is None or M[i, j] < rat:
                 rat = M[i, j]
@@ -263,7 +296,7 @@ def _find_max(M: np.array):
     rat = None
     for i in range(m):
         for j in range(n):
-            if M[i, j] < 0:
+            if M[i, j] == -1.:
                 continue
             if rat is None or M[i, j] > rat:
                 rat = M[i, j]

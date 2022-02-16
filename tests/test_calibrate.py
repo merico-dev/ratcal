@@ -3,6 +3,7 @@ import pytest
 
 from ratcal import calibrate
 from ratcal import average, rater_average, rater_median
+from ratcal import rater_min
 from ratcal import find_min, find_max
 from ratcal import check_rating_matrix
 
@@ -102,6 +103,19 @@ def test_rater_median():
                   [-1., -1., -1., -1.],
                   [300, 100, 100, -1.]])
     assert np.array_equal(rater_median(M), [2.5, 1., -1., 100])
+
+
+def test_rater_min():
+    assert rater_min(np.array([[]])) == [-1.]
+
+    M = np.array([[1., 2., 1.]])
+    assert np.array_equal(rater_min(M, [0]), [1.])
+
+    M = np.array([[1., 4., 3., 2.],
+                  [-1., -1., 10., -1.],
+                  [-1., -1., -1., -1.],
+                  [300, 100, 100, -1.]])
+    assert np.array_equal(rater_min(M), [1., 10., -1., 100])
 
 
 def test_paper_review_example():
