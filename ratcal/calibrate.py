@@ -259,6 +259,39 @@ def rater_min(M: np.array, indexes: list = None) -> np.array:
     return np.array(_rater_min(M, indexes))
 
 
+def _rater_max(M: np.array, indexes: list = None) -> list:
+    # m is the number of raters
+    # n is the number of objects being rated
+    m, n = M.shape
+
+    if indexes is None:
+        indexes = range(m)
+
+    rat = []
+    for i in indexes:
+        max_rat = None
+        for j in range(n):
+            if M[i, j] == -1.:
+                continue
+            if max_rat is None or M[i, j] > max_rat:
+                max_rat = M[i, j]
+        rat.append(-1. if max_rat is None else max_rat)
+    return rat
+
+
+def rater_max(M: np.array, indexes: list = None) -> np.array:
+    """
+    Calculate the min ratings of raters.
+
+    :param M: The matrix of ratings. Ratings should be equal or greater than zero. -1 denotes null.
+    :param indexes: A list of rows to calculate their average ratings
+    :return: The min ratings.
+    """
+    check_rating_matrix(M)
+
+    return np.array(_rater_max(M, indexes))
+
+
 def _find_min(M: np.array):
     m, n = M.shape
     rat = None
