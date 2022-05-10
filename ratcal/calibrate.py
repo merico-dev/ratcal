@@ -111,7 +111,7 @@ def calibrate(M: np.array, scale: (float, float) = (0., 0.), additive: bool = Tr
         M = np.column_stack((M, best_column, worst_column, average_column))
 
         assert M.shape[1] == n + 3
-        assert _object_average(M, [n, n + 1]) == [max_rat, min_rat]
+        assert np.allclose(_object_average(M, [n, n + 1]), [max_rat, min_rat])
 
         ratings, distinct, lenient = _calibrate(M)
 
